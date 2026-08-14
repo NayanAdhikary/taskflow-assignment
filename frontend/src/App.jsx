@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
-const API_BASE_URL = 'https://taskflow-assignment-o473.onrender.com'
+const API_BASE_URL = 'https://taskflow-assignment-o473.onrender.com'  
 
 // TaskCard Component
 function TaskCard({ task, onEdit, onDelete, onMove, columns }) {
@@ -394,7 +394,7 @@ function App() {
       <div className="error">
         <h2>Error loading board</h2>
         <p>{error}</p>
-        <p>Make sure your backend server is running on http://localhost:8000</p>
+        <p>Make sure your backend server is running at {API_BASE_URL}</p>
         <button onClick={fetchBoardData} className="btn btn-primary">
           Retry
         </button>
