@@ -433,6 +433,15 @@ function App() {
     )
   }
 
+function ClassyLogo() {
+  return (
+    <svg width="34" height="34" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 4L20.5 10.5L27 9L24.5 17L26 24H6L7.5 17L5 9L11.5 10.5L16 4Z" fill="#D4AF37" stroke="#F59E0B" strokeWidth="1.5" strokeLinejoin="round"/>
+      <circle cx="16" cy="18" r="2.5" fill="#0B1329"/>
+    </svg>
+  )
+}
+
   const allTasks = boardData ? boardData.columns.flatMap(column => column.tasks) : []
   const totalTasks = allTasks.length
   const highPriorityCount = allTasks.filter(task => task.priority === 'High').length
@@ -452,10 +461,12 @@ function App() {
         <header className="header">
           <div className="header-top">
             <div className="brand-badge">
-              <div className="brand-icon">⚡</div>
+              <div className="brand-icon">
+                <ClassyLogo />
+              </div>
               <div className="brand-info">
                 <h1 className="workspace-title">{filteredBoardData.name}</h1>
-                <p className="workspace-subtitle">Productivity & Task Management Hub</p>
+                <p className="workspace-subtitle">Executive Task Management Suite</p>
               </div>
             </div>
 
