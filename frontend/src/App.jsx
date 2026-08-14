@@ -5,14 +5,16 @@ const API_BASE_URL = 'https://taskflow-assignment-o473.onrender.com'
 
 // TaskCard Component
 function TaskCard({ task, onEdit, onDelete, onMove, columns }) {
-  const getPriorityColor = (priority) => {
+  const getPriorityInfo = (priority) => {
     switch (priority) {
-      case 'High': return '#e74c3c'
-      case 'Median': return '#f39c12' 
-      case 'Low': return '#27ae60'
-      default: return '#95a5a6'
+      case 'High': return { label: 'High Priority', class: 'priority-high', dot: '🔴' }
+      case 'Median': return { label: 'Medium Priority', class: 'priority-medium', dot: '🟡' }
+      case 'Low': return { label: 'Low Priority', class: 'priority-low', dot: '🟢' }
+      default: return { label: priority, class: 'priority-default', dot: '⚪' }
     }
   }
+
+  const priorityInfo = getPriorityInfo(task.priority)
 
   const handleMoveChange = (e) => {
     const newColumnId = parseInt(e.target.value)
@@ -22,18 +24,25 @@ function TaskCard({ task, onEdit, onDelete, onMove, columns }) {
   }
 
   return (
-    <div className="task-card">
-      <div className="priority-stripe" style={{ backgroundColor: getPriorityColor(task.priority) }}></div>
+    <div className={`task-card ${priorityInfo.class}`}>
+      <div className="task-card-glow"></div>
       
       <div className="task-content">
         <div className="task-header">
-          <h4 className="task-title">{task.title}</h4>
+          <div className="task-title-wrap">
+            <span className={`priority-badge ${priorityInfo.class}`}>
+              <span className="badge-dot">{priorityInfo.dot}</span>
+              <span>{task.priority}</span>
+            </span>
+            <h4 className="task-title">{task.title}</h4>
+          </div>
+          
           <div className="task-actions-inline">
-            <button onClick={() => onEdit(task)} className="action-btn edit-btn" title="Edit">
-              ✎
+            <button onClick={() => onEdit(task)} className="action-btn edit-btn" title="Edit Task">
+              ✏️
             </button>
-            <button onClick={() => onDelete(task.id)} className="action-btn delete-btn" title="Delete">
-              ✕
+            <button onClick={() => onDelete(task.id)} className="action-btn delete-btn" title="Delete Task">
+              🗑️
             </button>
           </div>
         </div>
@@ -43,23 +52,21 @@ function TaskCard({ task, onEdit, onDelete, onMove, columns }) {
         )}
         
         <div className="task-footer">
-          <div className="task-meta">
-            <span className="priority-label" style={{ color: getPriorityColor(task.priority) }}>
-              {task.priority} priority
-            </span>
+          <div className="move-wrapper">
+            <span className="move-icon">⇄</span>
+            <select
+              value={task.column_id}
+              onChange={handleMoveChange}
+              className="move-dropdown"
+              title="Move task to column"
+            >
+              {columns.map(column => (
+                <option key={column.id} value={column.id}>
+                  Move to {column.title}
+                </option>
+              ))}
+            </select>
           </div>
-          
-          <select
-            value={task.column_id}
-            onChange={handleMoveChange}
-            className="move-dropdown"
-          >
-            {columns.map(column => (
-              <option key={column.id} value={column.id}>
-                Move to {column.title}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
     </div>
@@ -92,7 +99,9 @@ function Column({ column, onEdit, onDelete, onMove, columns }) {
       <div className="tasks-list">
         {column.tasks.length === 0 ? (
           <div className="empty-column">
-            <span className="empty-text">No tasks yet</span>
+            <div className="empty-illustration">📭</div>
+            <span className="empty-text">No tasks in {column.title}</span>
+            <span className="empty-subtext">Click "+ New Task" to add one</span>
           </div>
         ) : (
           column.tasks.map(task => (
@@ -424,50 +433,92 @@ function App() {
     )
   }
 
-  const allTasks = filteredBoardData.columns.flatMap(column => column.tasks)
+  const allTasks = boardData ? boardData.columns.flatMap(column => column.tasks) : []
   const totalTasks = allTasks.length
+  const highPriorityCount = allTasks.filter(task => task.priority === 'High').length
+  const inProgressCount = boardData?.columns.find(c => c.title === 'In Progress')?.tasks.length || 0
+  const completedCount = boardData?.columns.find(c => c.title === 'Done')?.tasks.length || 0
 
   return (
     <div className="app">
+      <div className="ambient-background">
+        <div className="glow-blob glow-1"></div>
+        <div className="glow-blob glow-2"></div>
+        <div className="glow-blob glow-3"></div>
+      </div>
+
       <div className="workspace">
+        {/* Top Navbar */}
         <header className="header">
-          <div className="header-content">
-            <h1 className="workspace-title">
-              <span className="title-icon">🚀</span>
-              {filteredBoardData.name}
-            </h1>
-            <p className="workspace-subtitle">
-              {totalTasks === 0 ? 'Ready to start!' : 
-               totalTasks === 1 ? '1 task to manage' : 
-               `${totalTasks} tasks to manage`}
-            </p>
-          </div>
-          
-          <div className="header-actions">
-            <div className="filter-section">
-              <label htmlFor="filter">Show:</label>
-              <select
-                id="filter"
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="filter-dropdown"
-              >
-                <option value="All">All tasks</option>
-                <option value="High">🔴 High priority</option>
-                <option value="Median">🟡 Medium priority</option>
-                <option value="Low">🟢 Low priority</option>
-              </select>
+          <div className="header-top">
+            <div className="brand-badge">
+              <div className="brand-icon">⚡</div>
+              <div className="brand-info">
+                <h1 className="workspace-title">{filteredBoardData.name}</h1>
+                <p className="workspace-subtitle">Productivity & Task Management Hub</p>
+              </div>
             </div>
-            
-            <button onClick={handleCreateTask} className="btn btn-primary btn-create">
-              + New Task
-            </button>
+
+            <div className="header-actions">
+              <div className="filter-pill">
+                <span className="filter-label">Filter:</span>
+                <select
+                  id="filter"
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className="filter-dropdown"
+                >
+                  <option value="All">All Tasks</option>
+                  <option value="High">🔴 High Priority</option>
+                  <option value="Median">🟡 Medium Priority</option>
+                  <option value="Low">🟢 Low Priority</option>
+                </select>
+              </div>
+
+              <button onClick={handleCreateTask} className="btn btn-primary btn-create">
+                <span className="btn-icon">+</span>
+                <span>New Task</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Metrics Bar */}
+          <div className="metrics-grid">
+            <div className="metric-card metric-total">
+              <div className="metric-icon">📋</div>
+              <div className="metric-content">
+                <span className="metric-label">Total Tasks</span>
+                <span className="metric-value">{totalTasks}</span>
+              </div>
+            </div>
+            <div className="metric-card metric-urgent">
+              <div className="metric-icon">🔥</div>
+              <div className="metric-content">
+                <span className="metric-label">High Priority</span>
+                <span className="metric-value">{highPriorityCount}</span>
+              </div>
+            </div>
+            <div className="metric-card metric-progress">
+              <div className="metric-icon">⚡</div>
+              <div className="metric-content">
+                <span className="metric-label">In Progress</span>
+                <span className="metric-value">{inProgressCount}</span>
+              </div>
+            </div>
+            <div className="metric-card metric-done">
+              <div className="metric-icon">🎉</div>
+              <div className="metric-content">
+                <span className="metric-label">Completed</span>
+                <span className="metric-value">{completedCount}</span>
+              </div>
+            </div>
           </div>
         </header>
 
+        {/* Kanban Board Container */}
         <main className="board-container">
           <div className="kanban-board">
-            {filteredBoardData.columns.map((column, index) => (
+            {filteredBoardData.columns.map((column) => (
               <Column
                 key={column.id}
                 column={column}
