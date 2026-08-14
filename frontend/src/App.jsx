@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
-const API_BASE_URL = 'https://taskflow-assignment-o473.onrender.com'  
+const API_BASE_URL = 'https://taskflow-assignment-o473.onrender.com'
 
 // TaskCard Component
 function TaskCard({ task, onEdit, onDelete, onMove, columns }) {
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'High': return '#ff4757'
-      case 'Median': return '#ffa502'
-      case 'Low': return '#2ed573'
-      default: return '#747d8c'
+      case 'High': return '#e74c3c'
+      case 'Median': return '#f39c12' 
+      case 'Low': return '#27ae60'
+      default: return '#95a5a6'
     }
   }
 
@@ -23,78 +23,89 @@ function TaskCard({ task, onEdit, onDelete, onMove, columns }) {
 
   return (
     <div className="task-card">
-      <div className="task-header">
-        <h4>{task.title}</h4>
-        <span
-          className="priority-badge"
-          style={{ backgroundColor: getPriorityColor(task.priority) }}
-        >
-          {task.priority}
-        </span>
-      </div>
-      {task.description && (
-        <p className="task-description">{task.description}</p>
-      )}
-
-      <div className="task-actions">
-        <div className="task-controls">
+      <div className="priority-stripe" style={{ backgroundColor: getPriorityColor(task.priority) }}></div>
+      
+      <div className="task-content">
+        <div className="task-header">
+          <h4 className="task-title">{task.title}</h4>
+          <div className="task-actions-inline">
+            <button onClick={() => onEdit(task)} className="action-btn edit-btn" title="Edit">
+              ✎
+            </button>
+            <button onClick={() => onDelete(task.id)} className="action-btn delete-btn" title="Delete">
+              ✕
+            </button>
+          </div>
+        </div>
+        
+        {task.description && (
+          <p className="task-description">{task.description}</p>
+        )}
+        
+        <div className="task-footer">
+          <div className="task-meta">
+            <span className="priority-label" style={{ color: getPriorityColor(task.priority) }}>
+              {task.priority} priority
+            </span>
+          </div>
+          
           <select
             value={task.column_id}
             onChange={handleMoveChange}
-            className="move-select"
-            title="Move to column"
+            className="move-dropdown"
           >
             {columns.map(column => (
               <option key={column.id} value={column.id}>
-                {column.title}
+                Move to {column.title}
               </option>
             ))}
           </select>
-
-          <button
-            onClick={() => onEdit(task)}
-            className="btn btn-edit"
-            title="Edit task"
-          >
-            ✏️
-          </button>
-
-          <button
-            onClick={() => onDelete(task.id)}
-            className="btn btn-delete"
-            title="Delete task"
-          >
-            🗑️
-          </button>
-        </div>
-
-        <div className="task-meta">
-          <small>ID: {task.id}</small>
         </div>
       </div>
     </div>
   )
 }
 
-// Column Component
+// Column Component  
 function Column({ column, onEdit, onDelete, onMove, columns }) {
+  const getColumnEmoji = (title) => {
+    switch(title) {
+      case 'To Do': return '📝'
+      case 'In Progress': return '⚡'
+      case 'Done': return '✅'
+      default: return '📋'
+    }
+  }
+
   return (
-    <div className="column">
+    <div className={`column column-${column.id}`}>
       <div className="column-header">
-        <h3>{column.title}</h3>
-        <span className="task-count">{column.tasks.length}</span>
+        <div className="column-title">
+          <span className="column-emoji">{getColumnEmoji(column.title)}</span>
+          <h3>{column.title}</h3>
+        </div>
+        <div className="task-counter">
+          {column.tasks.length}
+        </div>
       </div>
-      <div className="tasks-container">
-        {column.tasks.map(task => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onMove={onMove}
-            columns={columns}
-          />
-        ))}
+      
+      <div className="tasks-list">
+        {column.tasks.length === 0 ? (
+          <div className="empty-column">
+            <span className="empty-text">No tasks yet</span>
+          </div>
+        ) : (
+          column.tasks.map(task => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onMove={onMove}
+              columns={columns}
+            />
+          ))
+        )}
       </div>
     </div>
   )
@@ -111,7 +122,6 @@ function TaskFormModal({ isOpen, onClose, onSubmit, task, columns }) {
 
   useEffect(() => {
     if (task) {
-      // Edit mode
       setFormData({
         title: task.title || '',
         description: task.description || '',
@@ -119,7 +129,6 @@ function TaskFormModal({ isOpen, onClose, onSubmit, task, columns }) {
         column_id: task.column_id || 1
       })
     } else {
-      // Create mode
       setFormData({
         title: '',
         description: '',
@@ -132,7 +141,7 @@ function TaskFormModal({ isOpen, onClose, onSubmit, task, columns }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!formData.title.trim()) {
-      alert('Task title is required!')
+      alert('Please enter a task title!')
       return
     }
     onSubmit(formData)
@@ -149,61 +158,61 @@ function TaskFormModal({ isOpen, onClose, onSubmit, task, columns }) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>{task ? 'Edit Task' : 'Create New Task'}</h3>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <h2>{task ? '✎ Edit Task' : '✨ Create New Task'}</h2>
+          <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="task-form">
-          <div className="form-group">
-            <label htmlFor="title">Title *</label>
+          <div className="input-group">
+            <label>Task Title *</label>
             <input
-              id="title"
               name="title"
               type="text"
               value={formData.title}
               onChange={handleChange}
-              placeholder="Enter task title"
-              required
+              placeholder="What needs to be done?"
+              className="text-input"
+              autoFocus
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
+          <div className="input-group">
+            <label>Description</label>
             <textarea
-              id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Enter task description (optional)"
+              placeholder="Add some details... (optional)"
+              className="text-area"
               rows="3"
             />
           </div>
 
           <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="priority">Priority</label>
+            <div className="input-group">
+              <label>Priority</label>
               <select
-                id="priority"
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
+                className="select-input"
               >
-                <option value="Low">Low</option>
-                <option value="Median">Median</option>
-                <option value="High">High</option>
+                <option value="Low">🟢 Low</option>
+                <option value="Median">🟡 Medium</option>
+                <option value="High">🔴 High</option>
               </select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="column_id">Column</label>
+            <div className="input-group">
+              <label>Start in Column</label>
               <select
-                id="column_id"
                 name="column_id"
                 value={formData.column_id}
                 onChange={handleChange}
+                className="select-input"
               >
                 {columns.map(column => (
                   <option key={column.id} value={column.id}>
@@ -215,7 +224,7 @@ function TaskFormModal({ isOpen, onClose, onSubmit, task, columns }) {
           </div>
 
           <div className="form-actions">
-            <button type="button" onClick={onClose} className="btn btn-cancel">
+            <button type="button" onClick={onClose} className="btn btn-secondary">
               Cancel
             </button>
             <button type="submit" className="btn btn-primary">
@@ -254,7 +263,7 @@ function App() {
     } catch (err) {
       console.error('Error fetching board data:', err)
       setError(err.message)
-      alert(`Failed to load board: ${err.message}`)
+      alert(`Oops! Couldn't load the board: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -308,21 +317,21 @@ function App() {
         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
       }
 
-      await fetchBoardData() // Refresh data
+      await fetchBoardData()
       setIsFormOpen(false)
       setEditingTask(null)
-
+      
       const action = editingTask ? 'updated' : 'created'
-      alert(`Task ${action} successfully!`)
+      alert(`Great! Task ${action} successfully! 🎉`)
     } catch (err) {
       console.error('Error saving task:', err)
-      alert(`Failed to save task: ${err.message}`)
+      alert(`Hmm, something went wrong: ${err.message}`)
     }
   }
 
   // Delete task
   const handleDeleteTask = async (taskId) => {
-    if (!window.confirm('Are you sure you want to delete this task?')) {
+    if (!window.confirm('Are you sure you want to delete this task? This cannot be undone.')) {
       return
     }
 
@@ -336,11 +345,11 @@ function App() {
         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
       }
 
-      await fetchBoardData() // Refresh data
-      alert('Task deleted successfully!')
+      await fetchBoardData()
+      alert('Task deleted! 🗑️')
     } catch (err) {
       console.error('Error deleting task:', err)
-      alert(`Failed to delete task: ${err.message}`)
+      alert(`Couldn't delete task: ${err.message}`)
     }
   }
 
@@ -360,10 +369,10 @@ function App() {
         throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
       }
 
-      await fetchBoardData() // Refresh data
+      await fetchBoardData()
     } catch (err) {
       console.error('Error moving task:', err)
-      alert(`Failed to move task: ${err.message}`)
+      alert(`Couldn't move task: ${err.message}`)
     }
   }
 
@@ -386,89 +395,89 @@ function App() {
   }
 
   if (loading) {
-    return <div className="loading">Loading board data...</div>
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+        <p>Loading your workspace...</p>
+      </div>
+    )
   }
 
   if (error) {
     return (
-      <div className="error">
-        <h2>Error loading board</h2>
+      <div className="error-screen">
+        <h2>Oops! Something went wrong 😅</h2>
         <p>{error}</p>
-        <p>Make sure your backend server is running at {API_BASE_URL}</p>
+        <p>Make sure your server is running at {API_BASE_URL}</p>
         <button onClick={fetchBoardData} className="btn btn-primary">
-          Retry
+          Try Again
         </button>
       </div>
     )
   }
 
   if (!filteredBoardData) {
-    return <div className="error">No board data available</div>
+    return (
+      <div className="error-screen">
+        <p>No data found</p>
+      </div>
+    )
   }
 
   const allTasks = filteredBoardData.columns.flatMap(column => column.tasks)
   const totalTasks = allTasks.length
-  const highPriorityCount = allTasks.filter(task => task.priority === 'High').length
-  const mediumPriorityCount = allTasks.filter(task => task.priority === 'Median').length
 
   return (
     <div className="app">
-      <div className="app-shell">
-        <header className="app-header">
-          <div className="brand-mark">TF</div>
-          <div className="title-wrap">
-            <p className="eyebrow">Productivity workspace</p>
-            <h1>{filteredBoardData.name}</h1>
+      <div className="workspace">
+        <header className="header">
+          <div className="header-content">
+            <h1 className="workspace-title">
+              <span className="title-icon">🚀</span>
+              {filteredBoardData.name}
+            </h1>
+            <p className="workspace-subtitle">
+              {totalTasks === 0 ? 'Ready to start!' : 
+               totalTasks === 1 ? '1 task to manage' : 
+               `${totalTasks} tasks to manage`}
+            </p>
+          </div>
+          
+          <div className="header-actions">
+            <div className="filter-section">
+              <label htmlFor="filter">Show:</label>
+              <select
+                id="filter"
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="filter-dropdown"
+              >
+                <option value="All">All tasks</option>
+                <option value="High">🔴 High priority</option>
+                <option value="Median">🟡 Medium priority</option>
+                <option value="Low">🟢 Low priority</option>
+              </select>
+            </div>
+            
+            <button onClick={handleCreateTask} className="btn btn-primary btn-create">
+              + New Task
+            </button>
           </div>
         </header>
 
-        <section className="task-summary" aria-label="Board summary">
-          <div className="summary-card summary-card--primary">
-            <span>Total tasks</span>
-            <strong>{totalTasks}</strong>
+        <main className="board-container">
+          <div className="kanban-board">
+            {filteredBoardData.columns.map((column, index) => (
+              <Column
+                key={column.id}
+                column={column}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+                onMove={handleMoveTask}
+                columns={boardData.columns}
+              />
+            ))}
           </div>
-          <div className="summary-card">
-            <span>High priority</span>
-            <strong>{highPriorityCount}</strong>
-          </div>
-          <div className="summary-card">
-            <span>Medium priority</span>
-            <strong>{mediumPriorityCount}</strong>
-          </div>
-        </section>
-
-        <div className="app-controls">
-          <button onClick={handleCreateTask} className="btn btn-primary btn-lg">
-            + Add Task
-          </button>
-
-          <div className="filter-controls">
-            <label htmlFor="priority-filter">Filter by Priority:</label>
-            <select
-              id="priority-filter"
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="filter-select"
-            >
-              <option value="All">All Priorities</option>
-              <option value="High">High Priority</option>
-              <option value="Median">Medium Priority</option>
-              <option value="Low">Low Priority</option>
-            </select>
-          </div>
-        </div>
-
-        <main className="board">
-          {filteredBoardData.columns.map(column => (
-            <Column
-              key={column.id}
-              column={column}
-              onEdit={handleEditTask}
-              onDelete={handleDeleteTask}
-              onMove={handleMoveTask}
-              columns={boardData.columns}
-            />
-          ))}
         </main>
 
         <TaskFormModal
